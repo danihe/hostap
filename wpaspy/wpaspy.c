@@ -10,7 +10,19 @@
 #include <structmember.h>
 
 #include "wpa_ctrl.h"
-
+#if PY_MAJOR_VERSION >= 3
+  #define PYMOD_RETURN(val) val
+  #define PYMOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
+  #define PYMOD_DEF(mod, name, methods, doc) \
+          static struct PyModuleDef moduledef = { \
+            PyModuleDef_HEAD_INIT, name, doc, -1, methods, }; \
+          mod = PyModule_Create(&moduledef);
+#else
+  #define PYMOD_RETURN(val)
+  #define PYMOD_INIT(name) void init##name(void)
+  #define PYMOD_DEF(mod, name, methods, doc) \
+          mod = Py_InitModule3(name, doc, methods);
+#endif
 
 struct wpaspy_obj {
 	PyObject_HEAD
@@ -44,8 +56,8 @@ static void wpaspy_close(struct wpaspy_obj *self)
 		self->ctrl = NULL;
 	}
 
-	if (self->ob_type)
-		self->ob_type->tp_free((PyObject *) self);
+	if (Py_TYPE(self))
+		Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 
@@ -179,7 +191,7 @@ static PyMemberDef wpaspy_members[] = {
 };
 
 static PyTypeObject wpaspy_ctrl = {
-	PyObject_HEAD_INIT(NULL)
+        PyVarObject_HEAD_INIT(NULL, 0)	
 	.tp_name = "wpaspy.Ctrl",
 	.tp_basicsize = sizeof(struct wpaspy_obj),
 	.tp_getattro = PyObject_GenericGetAttr,
@@ -198,12 +210,12 @@ static PyMethodDef module_methods[] = {
 };
 
 
-PyMODINIT_FUNC initwpaspy(void)
+PYMOD_INIT(initwpaspy)
 {
 	PyObject *mod;
 
 	PyType_Ready(&wpaspy_ctrl);
-	mod = Py_InitModule("wpaspy", module_methods);
+	PYMOD_DEF(mod, "wpaspy", module_methods, NULL);
 	wpaspy_error = PyErr_NewException("wpaspy.error", NULL, NULL);
 
 	Py_INCREF(&wpaspy_ctrl);
@@ -211,4 +223,5 @@ PyMODINIT_FUNC initwpaspy(void)
 
 	PyModule_AddObject(mod, "Ctrl", (PyObject *) &wpaspy_ctrl);
 	PyModule_AddObject(mod, "error", wpaspy_error);
+        return PYMOD_RETURN(mod);
 }

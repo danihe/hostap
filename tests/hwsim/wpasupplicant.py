@@ -240,7 +240,7 @@ class WpaSupplicant:
             iter = iter + 1
         if iter == 60:
             logger.error(self.ifname + ": Driver scan state did not clear")
-            print "Trying to clear cfg80211/mac80211 scan state"
+            print("Trying to clear cfg80211/mac80211 scan state")
             status, buf = self.host.execute(["ifconfig", self.ifname, "down"])
             if status != 0:
                 logger.info("ifconfig failed: " + buf)
@@ -437,7 +437,7 @@ class WpaSupplicant:
             try:
                 [name,value] = l.split('=', 1)
                 vals[name] = value
-            except ValueError, e:
+            except ValueError as e:
                 logger.info(self.ifname + ": Ignore unexpected STATUS line: " + l)
         return vals
 
@@ -506,7 +506,7 @@ class WpaSupplicant:
             try:
                 [name,value] = l.split('=', 1)
                 vals[name] = value
-            except ValueError, e:
+            except ValueError as e:
                 logger.info(self.ifname + ": Ignore unexpected MIB line: " + l)
         return vals
 
@@ -957,7 +957,7 @@ class WpaSupplicant:
             "mean_data_rate": 1500,
         }
         cmd = "WMM_AC_ADDTS %s tsid=%d up=%d" % (direction, tsid, up)
-        for (key, value) in params.iteritems():
+        for (key, value) in params.items():
             cmd += " %s=%d" % (key, value)
         if extra:
             cmd += " " + extra
